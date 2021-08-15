@@ -62,7 +62,23 @@ class _MyHomePageState extends State<MyHomePage> {
           image: DecorationImage(
             image: AssetImage('assets/images/my_bg.png'),
             fit: BoxFit.cover)),
-          child: Column(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                width: MediaQuery.of(context).size.width,
+                child: ElevatedButton.icon(
+                    onPressed: null,
+                    icon: Icon(Icons.phone, color: Colors.white,),
+                    label: Text('LOGIN WITH PHONE', style: TextStyle(color: Colors.white),),
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(Colors.black),
+                    ),
+                ),
+              ),
+            ],
+          ),
         ),
     );
   }
