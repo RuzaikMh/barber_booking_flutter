@@ -1,7 +1,17 @@
+import 'package:barber_booking_flutter/state/state_management.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_ui/firebase_auth_ui.dart';
+import 'package:firebase_auth_ui/providers.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
-  runApp(MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  //firebase
+  Firebase.initializeApp();
+  runApp(ProviderScope(child: MyApp() ));
 }
 
 class MyApp extends StatelessWidget {
@@ -28,7 +38,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
+  MyHomePage({Key key, this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -46,17 +56,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
+  GlobalKey<ScaffoldState> scaffoldState = new GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+
     return Scaffold(
+      key: scaffoldState,
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
@@ -69,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(16),
                 width: MediaQuery.of(context).size.width,
                 child: ElevatedButton.icon(
-                    onPressed: null,
+                    onPressed: () => processLogin(context),
                     icon: Icon(Icons.phone, color: Colors.white,),
                     label: Text('LOGIN WITH PHONE', style: TextStyle(color: Colors.white),),
                     style: ButtonStyle(
@@ -81,5 +87,31 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
     );
+  }
+
+  processLogin(BuildContext context) {
+    var user = FirebaseAuth.instance.currentUser;
+    if(user == null){ // user not login, show login
+      FirebaseAuthUi.instance()
+          .launchAuth([
+            AuthProvider.phone()
+      ]).then((firebaseUser) {
+        // Refresh state
+        context.read(userLogged).state =  FirebaseAuth.instance.currentUser;
+        ScaffoldMessenger.of(scaffoldState.currentContext).showSnackBar(
+            SnackBar(content: Text('Login success  ${FirebaseAuth.instance.currentUser.phoneNumber}')));
+      }).catchError((e) {
+        if(e is PlatformException)
+          if(e.code == FirebaseAuthUi.kUserCancelledError)
+            ScaffoldMessenger.of(scaffoldState.currentContext).showSnackBar(
+                SnackBar(content: Text('${e.message}'),));
+          else
+            ScaffoldMessenger.of(scaffoldState.currentContext).showSnackBar(
+                SnackBar(content: Text('Unk Error'),));
+      });
+    }
+    else { // user already login, start home page
+
+    }
   }
 }
